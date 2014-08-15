@@ -7,11 +7,16 @@ class Board
     @dim = dim
     @piece_depth = piece_depth
     @tiles = Array.new(@dim) { Array.new(@dim, nil) }
-    piece_depth.times do |i|
-      generate_starting_tiles(:red, i)
-      generate_starting_tiles(:black, dim - i - 1)
-    end
-    generate_starting_tiles(:red,7)
+    # piece_depth.times do |i|
+    #   generate_starting_tiles(:red, i)
+    #   generate_starting_tiles(:black, dim - i - 1)
+    # end
+    #generate_starting_tiles(:red,7)
+    # generate_starting_tiles(:red,3)
+    @tiles[2][2] = Piece.new([2,2], :black, self)
+    @tiles[4][2] = Piece.new([4,2], :black, self)
+    @tiles[6][2] = Piece.new([6,2], :black, self)
+    @tiles[7][3] = Piece.new([7,3], :red, self)
   end
   
   def display_state
@@ -52,7 +57,6 @@ class Board
       end
     end
   end
-  
 end
 
 # aaa = Board.new(8,3)

@@ -11,10 +11,35 @@ class Checkers
     counter = 0
     until over
       toggle = counter % 2
-      puts "playing game"
-      args = players[toggle].get_input
-      p args
-      counter += 1
+      @board.display_state
+      arg, proposed_moves = players[toggle].get_input
+      proposed_color = @board.tiles[proposed_moves.first.first][proposed_moves.first.last].color
+      
+      proposed_type = @board.tiles[proposed_moves.first.first][proposed_moves.first.last].type
+      
+      
+      #don't let players move pieces that aren't theirs
+      if players[toggle].color != proposed_color
+        "you can't move your opponent's pieces!"
+        next
+      end
+      
+      #has to specifically call this method on the piece the user wants to move
+      if @board.tiles[proposed_moves.first.first][proposed_moves.first.last].valid_move_seq?(arg, proposed_moves, proposed_color, proposed_type)
+        counter += 1
+      else
+        next
+      end
+      
+      #make moves if those moves are valid
+      
+      if @board.tiles.flatten.compact.select { |tile| tile.color == :red } == 0
+        puts "Game Over! Black wins!"
+        over = true
+      elsif @board.tiles.flatten.compact.select { |tile| tile.color == :black } == 0
+        puts "Game over! Red wins!"
+        over = true
+      end
     end
   end
 end
@@ -27,8 +52,23 @@ class HumanPlayer
   end
   
   def get_input
-    puts "#{@name}, enter from and to coordinates as origin/(multiple)destination ex: '[1,2]|[2,1]':"
-    input = gets.chomp.split('|')
+    puts "#{@name}, #{color} player; enter from and to coordinates as 
+    origin/(multiple)destination ex: 's,12,34' or 'j,12,34:"
+    
+    #first char of this string is what user wants to do
+    #count on user giving us quality input ;)
+    #shift off the argument (jump vs slide)
+    dump = gets.chomp.split(',')
+    arg = dump.shift
+    
+    
+    coordinates_array = []
+    
+    dump.each do |pair|
+      coordinates_array << [pair[0].to_i, pair[1].to_i]
+    end
+
+    [arg, coordinates_array]
   end
 end
 

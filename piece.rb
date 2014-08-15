@@ -1,4 +1,5 @@
 class Piece
+  
   attr_reader :type, :board
   attr_accessor :color, :coordinates 
   
@@ -42,15 +43,12 @@ class Piece
         [diff.first + @coordinates.last, diff.last + @coordinates.first]
       end
     elsif type == :king
-      p "inside king's valid jumps"
       absolute_positions = double_elements(move_diffs).map do |diff|
         #don't even try to read this.  just have faith that it works.
         [diff.first + @coordinates.last, diff.last + @coordinates.first]
       end
       # absolute_positions = []
       # absolute_positions << []
-      
-      p "absolute_positions = #{absolute_positions}"
     end
     
     
@@ -64,6 +62,64 @@ class Piece
       occupied_by_enemy = @board[jumped].color != @color
       occupied_by_enemy && @board[pos2].nil?
     end
+  end
+  
+
+  
+  def perform_moves(arg, proposed_moves, master_input_color, master_input_type, board)
+    start_position = proposed_moves.first
+    
+    another_dup = board
+    if arg == "s" #slide case
+      puts "got in on the slide arg"
+      puts "args"
+      p arg
+      p proposed_moves
+      p master_input_color
+      p master_input_type
+      puts "temp board before slide:"
+      another_dup.display_state
+      another_dup.tiles[start_position.first][start_position.last].perform_slide(proposed_moves[1])
+      puts "temp board after slide:"
+      another_dup.display_state
+      gets.chomp
+      return perform_slide(proposed_moves[1])
+      # puts board.display_state
+      # puts @board.display_state
+    else #jumps or many jumps case
+      #shift off the first element as a piece cant move to its own square
+      proposed_moves.shift
+      puts "got in on the jump arg"
+      while proposed_moves.count >= 1
+        if !perform_jump(proposed_moves[0])
+          return false
+        end
+        proposed_moves.shift
+      end
+    end
+    return true  
+  end
+  
+  def perform_moves!(arg, proposed_moves, master_input_color, master_input_type, board)
+    
+  end
+  
+  def valid_move_seq?(arg, proposed_moves, master_input_color, master_input_type)
+    arg = arg
+    proposed_moves = proposed_moves
+    master_input_color = master_input_color
+    master_input_type = master_input_type
+    
+    test_board = @board.dup
+    puts "heres test board in the valid_moves_method"
+    test_board.display_state
+    
+    if proposed_moves.count < 2
+      puts "invalid number of proposed moves"
+      return false
+    end
+    
+    perform_moves(arg, proposed_moves, master_input_color, master_input_type, test_board)
   end
   
   def move_piece!(pos2)
@@ -106,18 +162,15 @@ class Piece
         [[-1,1],[1,1]]
       end
     elsif @type == :king
-      p "generating king's move diffs"
       [[-1,-1],[1,-1],[-1,1],[1,1]]
     end
   end
   
   def double_elements(arr)
-    p "doubling elements"
     doubled_array = []
     arr.each do |coord|
       doubled_array << [(coord[0] * 2), (coord[1] * 2)]
     end
-    p "doubled_array = #{doubled_array}"
     doubled_array
   end
   
@@ -131,6 +184,8 @@ class Piece
     end
     false
   end
+  
+  
   
   def inside_bounds?(coords)
     coords.all?{ |coord| coord.between?(0, @board.dim - 1) }
