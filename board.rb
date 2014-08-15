@@ -40,6 +40,10 @@ class Board
     @tiles[coordinates.first][coordinates.last]
   end
   
+  def []=(coordinates, piece)
+    @tiles[coordinates.first][coordinates.last] = piece
+  end
+  
   def generate_starting_tiles(color, rank)
     @dim.times do |i|
       if (rank - i).even?
@@ -51,19 +55,26 @@ class Board
   
 end
 
-aaa = Board.new(8,3)
-# aaa.display_state
-aaa.tiles[7][7].maybe_promote
-p aaa.tiles[7][7].type
-p aaa.tiles[0][2]
-aaa.tiles[2][0].color = :black
-#aaa.tiles[2][2] = nil
-aaa.display_state
+# aaa = Board.new(8,3)
+#
+# # aaa.display_state
+# aaa.tiles[7][7].maybe_promote
+# # p aaa.tiles[7][7].type
+# # p aaa.tiles[0][2]
+# aaa.tiles[2][0].color = :black
+# #aaa.tiles[2][2] = nil
+# # aaa.display_state
+# # aaa.tiles[2][2].perform_slide([3,3])
+# # aaa.display_state
 # aaa.tiles[2][2].perform_slide([3,3])
+# # aaa.display_state
+# aaa.tiles[3][3].perform_slide([4,2])
+# # aaa.display_state
+# aaa.tiles[5][1].perform_jump([3,3])
 # aaa.display_state
-aaa.tiles[2][2].perform_slide([3,3])
-aaa.display_state
-aaa.tiles[3][3].perform_slide([4,2])
-aaa.display_state
-aaa.tiles[5][1].perform_jump([3,3])
-aaa.display_state
+# # aaa.generate_starting_tiles(:red, 4)
+# aaa.tiles[4][4] = Piece.new([4,4], :red, aaa)
+# aaa.display_state
+# #aaa.display_state
+# aaa.tiles[4][4].perform_jump([2,2])
+# aaa.display_state

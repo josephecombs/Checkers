@@ -4,7 +4,7 @@ class Piece
   
   def initialize(coordinates, color, board)
     @coordinates = coordinates
-    @type = :man
+    @type = :king
     @color = color
     @board = board
   end
@@ -25,75 +25,73 @@ class Piece
     end
   end
   
-  def perform_slide(pos2)
-    absolute_move_diffs = []
-    move_diffs.each do |diff| 
-      absolute_move_diffs << [diff.last + @coordinates.last, diff.first + @coordinates.first]
+  def valid_slides
+    absolute_positions = move_diffs.map do |diff| 
+      [diff.last + @coordinates.last, diff.first + @coordinates.first]
+    end
+    
+    absolute_positions.select do |position|
+      inside_bounds?(position) && @board[position].nil?
+    end
+  end
+  
+  def valid_jumps
+    if type == :man
+      absolute_positions = double_elements(move_diffs).map do |diff| 
+        #don't even try to read this.  just have faith that it works.
+        [diff.first + @coordinates.last, diff.last + @coordinates.first]
+      end
+    elsif type == :king
+      p "inside king's valid jumps"
+      absolute_positions = double_elements(move_diffs).map do |diff|
+        #don't even try to read this.  just have faith that it works.
+        [diff.first + @coordinates.last, diff.last + @coordinates.first]
+      end
+      # absolute_positions = []
+      # absolute_positions << []
+      
+      p "absolute_positions = #{absolute_positions}"
     end
     
     
-    if inside_bounds?(pos2)
-      # p "made it inside bounds check"
-      # p absolute_move_diffs
-      # p move_diffs
-      # p pos2.first, pos2.last
-      # p self
-      # p "if this is blank it can be moved to:___#{@board.tiles[pos2.first][pos2.last]}___"
-      if absolute_move_diffs.include?(pos2) && @board.tiles[pos2.first][pos2.last] == nil
-        #change the board
-        # puts "made it in"
-        # @board.tiles[]
-        tile_to_nil = @coordinates
-        @board.tiles[pos2.first][pos2.last] = self.dup
-        @board.tiles[pos2.first][pos2.last].coordinates = pos2
-        @board.tiles[tile_to_nil.first][tile_to_nil.last] = nil
-        # @board.tiles[pos1[0]][pos1[1]] = nil
-        # @board.tiles[pos2[0]][pos2[1]].coordinates = pos2
-        
-        #try to promote the piece you've moved
-        # maybe_promote
-        true      
-      else
-        false
-      end
+    absolute_positions.select do |pos2|
+      jumped = [
+        (@coordinates.first + pos2.first) / 2, 
+        (@coordinates.last + pos2.last) / 2
+      ]
+
+      next unless inside_bounds?(pos2) && !@board[jumped].nil?
+      occupied_by_enemy = @board[jumped].color != @color
+      occupied_by_enemy && @board[pos2].nil?
+    end
+  end
+  
+  def move_piece!(pos2)
+    @board[pos2] = self
+    @board[@coordinates] = nil
+    @coordinates = pos2
+  end
+  
+  def perform_slide(pos2)
+    if valid_slides.include?(pos2)
+      move_piece!(pos2)
+      true
+    else
+      false
     end
   end
   
   def perform_jump(pos2)
-    doubled_diffs = double_elements(move_diffs)
-    
-    absolute_move_diffs = []
-    doubled_diffs.each do |diff| 
-      #don't even try to read this.  just have faith that it works.
-      absolute_move_diffs << [diff.first + @coordinates.last, diff.last + @coordinates.first]
-    end
-    
-    p "relative doubled diffs: #{doubled_diffs}"
-    
-    p "absolute_doubled_diffs: #{absolute_move_diffs}"
-    p coordinates
-    # doubled_diffs = move_diffs.map { |diff| diff.map{|point| point * 2} }
-    # p doubled_diffs
-    # doubled_diffs.map! {|diff| diff + @coordinates }
-    midpoint_coord = [(pos2.first)]
-    
-    if absolute_move_diffs.include?(pos2) && @board.tiles[pos2.first][pos2.last] == nil
-      p "made it in to second level for jump"
-      #change the board for the moving piece
-      
-      #nuke the jumped piece
-      
-      jumped_tile_to_nil = [(@coordinates.first + pos2.first)/2, (@coordinates.last + pos2.last)/2]
-      p "jumped_tile_to_nil #{jumped_tile_to_nil}"
-      tile_to_nil = @coordinates
-      @board.tiles[pos2.first][pos2.last] = self.dup
-      @board.tiles[pos2.first][pos2.last].coordinates = pos2
-      @board.tiles[tile_to_nil.first][tile_to_nil.last] = nil
-      @board.tiles[jumped_tile_to_nil.first][jumped_tile_to_nil.last] = nil
-      
-      #nuke the jumped piece
-      
-      #maybe_promote(pos2)
+    if valid_jumps.include?(pos2)
+      jumped_tile_to_nil = [
+        (@coordinates.first + pos2.first)/2, 
+        (@coordinates.last + pos2.last)/2
+      ]
+      #this must be done after calculating jumped_tile_to_nil because move_piece mutates coordinates
+      move_piece!(pos2)
+      @board.display_state
+      @board[jumped_tile_to_nil] = nil
+      @board.display_state
       true
     else
       false
@@ -107,25 +105,23 @@ class Piece
       else
         [[-1,1],[1,1]]
       end
-    elsif type == :king
+    elsif @type == :king
+      p "generating king's move diffs"
       [[-1,-1],[1,-1],[-1,1],[1,1]]
     end
   end
   
   def double_elements(arr)
+    p "doubling elements"
     doubled_array = []
     arr.each do |coord|
       doubled_array << [(coord[0] * 2), (coord[1] * 2)]
     end
+    p "doubled_array = #{doubled_array}"
     doubled_array
   end
   
   def maybe_promote
-    # if pos[0] == 7 && @color == :red
-    #   @board.tiles[pos].type = :king
-    # elsif pos[0] == 0 && @color == :black
-    #   @board.tiles[pos].type = :king
-    # end
     if @coordinates.first == 7 && @color == :red
       @type = :king
       return true 
@@ -136,7 +132,7 @@ class Piece
     false
   end
   
-  def inside_bounds?(coord)
-    coord.first.between?(0, @board.dim - 1) && coord.last.between?(0, @board.dim - 1)
+  def inside_bounds?(coords)
+    coords.all?{ |coord| coord.between?(0, @board.dim - 1) }
   end
 end
